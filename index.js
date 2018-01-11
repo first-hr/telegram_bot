@@ -3,15 +3,15 @@ const Telegraf = require('telegraf');
 const Markup = require('telegraf/markup');
 const Moment = require('moment');
 const MomentRange = require('moment-range');
+const moment = MomentRange.extendMoment(Moment);
 const google = require('googleapis');
 const googleAuth = require('google-auth-library');
-const moment = MomentRange.extendMoment(Moment);
 require('dotenv').config();
 const { reply } = Telegraf;
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-bot.use(Telegraf.log());
+// bot.use(Telegraf.log());
 
 bot.command('start', ctx => {
     const time = moment.unix(ctx.update.message.date).format();
