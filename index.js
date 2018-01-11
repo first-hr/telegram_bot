@@ -34,34 +34,16 @@ bot.command('start', ctx => {
             return hours.map(m => m.format('HH:mm'));
         }
 
-        bot.hears(time[0], ctx => {
-            return ctx.reply('когда вам удобно пройти собеседование: ', Markup
-                .keyboard(makeTwentyMinutes(0))
+        bot.hears(time, ctx => {
+            return ctx.reply('Выберите время', Markup
+                .keyboard(makeTwentyMinutes(time.indexOf(ctx.update.message.text)))
                 .oneTime()
                 .resize()
                 .extra()
             );
         });
 
-        bot.hears(time[1], ctx => {
-            return ctx.reply('когда вам удобно пройти собеседование: ', Markup
-                .keyboard(makeTwentyMinutes(1))
-                .oneTime()
-                .resize()
-                .extra()
-            );
-        });
-
-        bot.hears(time[2], ctx => {
-            return ctx.reply('когда вам удобно пройти собеседование: ', Markup
-                .keyboard(makeTwentyMinutes(2))
-                .oneTime()
-                .resize()
-                .extra()
-            );
-        });
-
-        return ctx.reply('когда вам удобно пройти собеседование: ', Markup
+        return ctx.reply('Выберите время суток', Markup
             .keyboard(time)
             .oneTime()
             .resize()
@@ -77,70 +59,6 @@ bot.command('start', ctx => {
     );
 });
 
-
-bot.command('custom', ({ reply }) => {
-    return reply('Custom buttons keyboard', Markup
-        .keyboard([
-            ['🔍 Search', '😎 Popular'], // Row1 with 2 buttons
-            ['☸ Setting', '📞 Feedback'], // Row2 with 2 buttons
-            ['📢 Ads', '⭐️ Rate us', '👥 Share'] // Row3 with 3 buttons
-        ])
-        .oneTime()
-        .resize()
-        .extra()
-    )
-})
-
-bot.hears('🔍 Search', ctx => ctx.reply('Yay!'))
-bot.hears('📢 Ads', ctx => ctx.reply('Free hugs. Call now!'))
-
-bot.command('pyramid', (ctx) => {
-    return ctx.reply('Keyboard wrap', Extra.markup(
-        Markup.keyboard(['one', 'two', 'three', 'four', 'five', 'six'], {
-            wrap: (btn, index, currentRow) => currentRow.length >= (index + 1) / 2
-        })
-    ))
-})
-
-bot.command('simple', (ctx) => {
-    return ctx.replyWithHTML('<b>Coke</b> or <i>Pepsi?</i>', Extra.markup(
-        Markup.keyboard(['Coke', 'Pepsi'])
-    ))
-})
-
-bot.command('inline', (ctx) => {
-    return ctx.reply('<b>Coke</b> or <i>Pepsi?</i>', Extra.HTML().markup((m) =>
-        m.inlineKeyboard([
-            m.callbackButton('Coke', 'Coke'),
-            m.callbackButton('Pepsi', 'Pepsi')
-        ])))
-})
-
-bot.command('random', (ctx) => {
-    return ctx.reply('random example',
-        Markup.inlineKeyboard([
-            Markup.callbackButton('Coke', 'Coke'),
-            Markup.callbackButton('Dr Pepper', 'Dr Pepper', Math.random() > 0.5),
-            Markup.callbackButton('Pepsi', 'Pepsi')
-        ]).extra()
-    )
-})
-
-bot.hears(/\/wrap (\d+)/, (ctx) => {
-    return ctx.reply('Keyboard wrap', Extra.markup(
-        Markup.keyboard(['one', 'two', 'three', 'four', 'five', 'six'], {
-            columns: parseInt(ctx.match[1])
-        })
-    ))
-})
-
-bot.action('Dr Pepper', (ctx, next) => {
-    return ctx.reply('👍').then(() => next())
-})
-
-bot.action(/.+/, (ctx) => {
-    return ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice`)
-})
 /**
  * Error Handling
  */
@@ -156,3 +74,19 @@ bot.command('/start', (ctx) => ctx.reply('когда вам удобно про�
 // bot.on('text', ctx => ctx.reply('hey'));
 
 bot.startPolling();
+
+// bot.command('inline', (ctx) => {
+//     return ctx.reply('<b>Coke</b> or <i>Pepsi?</i>', Extra.HTML().markup((m) =>
+//         m.inlineKeyboard([
+//             m.callbackButton('Coke', 'Coke'),
+//             m.callbackButton('Pepsi', 'Pepsi')
+//         ])))
+// });
+//
+// bot.action('Dr Pepper', (ctx, next) => {
+//     return ctx.reply('👍').then(() => next())
+// });
+//
+// bot.action(/.+/, (ctx) => {
+//     return ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice`)
+// });
