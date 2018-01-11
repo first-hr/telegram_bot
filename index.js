@@ -1,17 +1,17 @@
+
 const Telegraf = require('telegraf');
-const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
 const Moment = require('moment');
 const MomentRange = require('moment-range');
-
+const google = require('googleapis');
+const googleAuth = require('google-auth-library');
 const moment = MomentRange.extendMoment(Moment);
 require('dotenv').config();
 const { reply } = Telegraf;
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-
-// bot.use(Telegraf.log());
+bot.use(Telegraf.log());
 
 bot.command('start', ctx => {
     const time = moment.unix(ctx.update.message.date).format();
@@ -25,7 +25,6 @@ bot.command('start', ctx => {
             [12, 16],
             [16, 20]
         ];
-
         function makeTwentyMinutes(i) {
             const from = moment(ranges[i][0].toString(), 'h').format();
             const till = moment(ranges[i][1].toString(), 'h').format();
@@ -35,6 +34,11 @@ bot.command('start', ctx => {
         }
 
         bot.hears(time, ctx => {
+
+            bot.hears(makeTwentyMinutes(time.indexOf(ctx.update.message.text)), ctx => {
+                return ctx.reply(`Вам назначено собеседование на ${ctx.update.message.text}, удачи :)`);
+            });
+
             return ctx.reply('Выберите время', Markup
                 .keyboard(makeTwentyMinutes(time.indexOf(ctx.update.message.text)))
                 .oneTime()
