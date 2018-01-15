@@ -71,12 +71,6 @@ bot.catch((err) => {
     console.log('Ooops', err)
 });
 
-bot.command('/start', (ctx) => ctx.reply('когда вам удобно пройти собеседование: '));
-// bot.command('/oldschool', (ctx) => ctx.reply('Hello'));
-// bot.command('/modern', ({ reply }) => reply('Yo'));
-// bot.command('/hipster', reply('λ'));
-// bot.on('text', ctx => ctx.reply('hey'));
-
 bot.startPolling();
 
 // bot.command('inline', (ctx) => {
