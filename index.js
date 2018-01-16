@@ -1,90 +1,148 @@
-
 const Telegraf = require('telegraf');
+const fs = require('fs');
+const session = require('telegraf/session');
 const Markup = require('telegraf/markup');
+const Stage = require('telegraf/stage');
+const Scene = require('telegraf/scenes/base');
+const Extra = require('telegraf/extra');
+const { authorize } = require('./googleAuthorization');
+const { addRow, getRows } = require('./googleQueris');
 const Moment = require('moment');
 const MomentRange = require('moment-range');
+const _ = require('lodash');
 const moment = MomentRange.extendMoment(Moment);
-const google = require('googleapis');
-const googleAuth = require('google-auth-library');
 require('dotenv').config();
-const { reply } = Telegraf;
-
-const bot = new Telegraf(process.env.BOT_TOKEN);
-
-// bot.use(Telegraf.log());
-
-bot.command('start', ctx => {
-    const time = moment.unix(ctx.update.message.date).format();
-    const firstDay = moment(time).add(1, 'day').format('MM/DD/YYYY');
-    const secondDay = moment(time).add(2, 'day').format('MM/DD/YYYY');
-
-    bot.hears([`${firstDay}`, `${secondDay}`], ctx => {
-        const time = ['утро', 'день', 'вечер'];
-        const ranges = [
-            [8, 12],
-            [12, 16],
-            [16, 20]
-        ];
-        function makeTwentyMinutes(i) {
-            const from = moment(ranges[i][0].toString(), 'h').format();
-            const till = moment(ranges[i][1].toString(), 'h').format();
-            const range = moment.range(from, till);
-            const hours = Array.from(range.by('minutes', { step: 20 }));
-            return hours.map(m => m.format('HH:mm'));
-        }
-
-        bot.hears(time, ctx => {
-
-            bot.hears(makeTwentyMinutes(time.indexOf(ctx.update.message.text)), ctx => {
-                return ctx.reply(`Вам назначено собеседование на ${ctx.update.message.text}, удачи :)`);
-            });
-
-            return ctx.reply('Выберите время', Markup
-                .keyboard(makeTwentyMinutes(time.indexOf(ctx.update.message.text)))
-                .oneTime()
-                .resize()
-                .extra()
-            );
-        });
-
-        return ctx.reply('Выберите время суток', Markup
-            .keyboard(time)
-            .oneTime()
-            .resize()
-            .extra()
-        );
-    });
-
-    return ctx.reply('когда вам удобно пройти собеседование: ', Markup
-        .keyboard([firstDay, secondDay])
-        .oneTime()
-        .resize()
-        .extra()
-    );
-});
+const { enter, leave } = Stage;
+const globalObj = {};
 
 /**
- * Error Handling
+ * Start Scene
+ * @type {BaseScene}
  */
-
-bot.catch((err) => {
-    console.log('Ooops', err)
+const startScene = new Scene('start');
+startScene.enter(ctx => {
+    const time = moment.unix(ctx.update.message.date).format();
+    const firstDay = moment(time).add(1, 'day').format('DD/MM/YYYY');
+    const secondDay = moment(time).add(2, 'day').format('DD/MM/YYYY');
+    startScene.action('day1', ctx => {
+        globalObj.day = firstDay;
+        ctx.scene.enter('day')
+    });
+    startScene.action('day2', ctx => {
+        globalObj.day = secondDay;
+        ctx.scene.enter('day')
+    });
+    return ctx.reply('когда вам удобно пройти собеседование: ', Extra.HTML().markup((m) =>
+        m.inlineKeyboard([
+            m.callbackButton(firstDay, 'day1'),
+            m.callbackButton(secondDay, 'day2')
+        ])))
 });
+startScene.on('message', ctx => ctx.reply('Выберите день'));
+
+/**
+ * Day Scene
+ */
+const dayScene = new Scene('day');
+const time = ['утро', 'день', 'вечер'];
+const ranges = [
+    [10, 12],
+    [13, 16],
+    [16, 19]
+];
+function makeTwentyMinutes(i, type) {
+    const from = moment(ranges[i][0].toString(), 'h').format();
+    const till = moment(ranges[i][1].toString(), 'h').format();
+    const range = moment.range(from, till);
+    const hours = Array.from(range.by('minutes', { step: 20 }));
+    let j;
+    const resultArr = [];
+
+    fs.readFile('client_secret.json', (err, content) => {
+        if (err) {
+            console.log('Error loading client secret file: ' + err);
+            return;
+        }
+
+        // Authorize a client with the loaded credentials, then call the Google Sheets API.
+        authorize(JSON.parse(content))
+            .then(doc => {
+                getRows(doc, '18/01/2018')
+            })
+            .catch(console.error)
+    });
+
+    if (type) {
+        return hours.map(one => one.format('HH:mm'))
+    }
+    hours.forEach(one => {
+        j = one.format('HH:mm');
+        resultArr.push(Markup.callbackButton(j, j))
+    });
+    return _.chunk(resultArr, resultArr.length/4);
+
+}
+
+dayScene.enter((ctx) => {
+    return ctx.reply('Выберите время суток', Extra.markup(m =>
+        m.inlineKeyboard([
+            m.callbackButton(time[0], time[0]),
+            m.callbackButton(time[1], time[1]),
+            m.callbackButton(time[2], time[2])
+        ])))
+
+});
+dayScene.action(time, ctx => {
+    globalObj.time = ctx.match;
+    ctx.scene.enter('time');
+});
+dayScene.command('cancel', leave());
+dayScene.on('message', (ctx) => ctx.reply('Выберите время суток'));
+
+/**
+ * Time Scene
+ */
+const timeScene = new Scene('time');
+timeScene.enter(ctx => {
+    timeScene.action(makeTwentyMinutes(time.indexOf(globalObj.time), true), ctx => {
+        globalObj.hour = ctx.match;
+        ctx.scene.leave();
+    });
+    return ctx.reply('Выберите время суток',
+        Markup
+            .inlineKeyboard(makeTwentyMinutes(time.indexOf(globalObj.time)))
+            .extra()
+    )
+});
+timeScene.leave(ctx => {
+    fs.readFile('client_secret.json', (err, content) => {
+        if (err) {
+            console.log('Error loading client secret file: ' + err);
+            return;
+        }
+
+        // Authorize a client with the loaded credentials, then call the Google Sheets API.
+        authorize(JSON.parse(content))
+            .then(doc => {
+                addRow(doc, [globalObj.day, globalObj.hour])
+                    .then(doc => {
+                        ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                    })
+                    .catch(console.error)
+            })
+            .catch(console.error)
+    });
+});
+timeScene.on('message', ctx => ctx.reply('Выберите время пожалуйста'));
+
+const bot = new Telegraf(process.env.BOT_TOKEN);
+const stage = new Stage([startScene, dayScene, timeScene]);
+bot.use(session());
+bot.use(stage.middleware());
+bot.use(Telegraf.log());
+bot.command('start', enter('start'));
+
+bot.on('message', ctx => ctx.reply('Для активации бота нажмите /start'));
+bot.action(/.+/, ctx => ctx.reply('Для активации бота нажмите /start'));
 
 bot.startPolling();
-
-// bot.command('inline', (ctx) => {
-//     return ctx.reply('<b>Coke</b> or <i>Pepsi?</i>', Extra.HTML().markup((m) =>
-//         m.inlineKeyboard([
-//             m.callbackButton('Coke', 'Coke'),
-//             m.callbackButton('Pepsi', 'Pepsi')
-//         ])))
-// });
-//
-// bot.action('Dr Pepper', (ctx, next) => {
-//     return ctx.reply('👍').then(() => next())
-// });
-//
-// bot.action(/.+/, (ctx) => {
-//     return ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice`)
-// });
