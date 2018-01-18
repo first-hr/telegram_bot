@@ -19,20 +19,9 @@ const globalObj = {};
  * Start Scene
  * @type {BaseScene}
  */
-const replyWithPhoto = (ctx, path) => {
-    ctx.replyWithChatAction('upload_photo');
-    return ctx.replyWithPhoto(
-        { url:path },
-        Markup.removeKeyboard().extra()
-    )
-};
 
 const startScene = new Scene('start');
 startScene.enter(ctx => {
-    // const url = `${__dirname}/way.gif`;
-    // return ctx.replyWithVideo({
-    //     source: fs.createReadStream(url)
-    // });
     globalObj.fullname = `${ctx.message.from.first_name || ""} ${ctx.message.from.last_name || ""}`;
     globalObj.chatId = ctx.message.chat.id;
     const time = moment.unix(ctx.update.message.date).format();
@@ -142,6 +131,7 @@ timeScene.leave(ctx => {
                     globalObj.fullname, null, null, null, 'В процессе', null, globalObj.chatId])
                     .then(doc => {
                         ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                        return ctx.replyWithLocation(55.738421, 37.663101);
                     })
                     .catch(console.error)
             })
