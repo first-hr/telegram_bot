@@ -1,7 +1,7 @@
 
 const google = require('googleapis');
 const sheets = google.sheets('v4');
-const spreadsheetId = '1VwHhX93tJgyYACKobhvkam2E5Bv0fm1PKj9qKE-6i7A';
+const spreadsheetId = '1SwkOE4sLWTo-mtii0Buk5yySw2FCOp2yKZZI8n-16tk';
 
 module.exports = {
 
@@ -39,7 +39,7 @@ module.exports = {
                 for (let i = 1; i < rows.length; i++) {
                     let row = rows[i];
                     if (date === row[0]) {
-                        array.push(row);
+                        array.push(row[1]);
                     }
                 }
                 return resolve(array)

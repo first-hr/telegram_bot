@@ -10,6 +10,16 @@ const TOKEN_PATH = `${__dirname}/sheets.googleapis.com-firsthr.json`;
 module.exports = {
     authorize
 };
+fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+    if (err) {
+        console.log('Error loading client secret file: ' + err);
+        return;
+    }
+    // Authorize a client with the loaded credentials, then call the
+    // Google Sheets API.
+    authorize(JSON.parse(content));
+});
+
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -28,12 +38,11 @@ function authorize(credentials) {
     return new Promise((resolve, reject) => {
         fs.readFile(TOKEN_PATH, (err, token) => {
             if (err) {
-                getNewToken(oauth2Client, (err, result) => {
+                return getNewToken(oauth2Client, (err, result) => {
                     if (err) return reject(err);
                     resolve(result);
                 });
             }
-
             oauth2Client.credentials = JSON.parse(token);
             resolve(oauth2Client);
         })
