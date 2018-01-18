@@ -28,12 +28,11 @@ function authorize(credentials) {
     return new Promise((resolve, reject) => {
         fs.readFile(TOKEN_PATH, (err, token) => {
             if (err) {
-                getNewToken(oauth2Client, (err, result) => {
+                return getNewToken(oauth2Client, (err, result) => {
                     if (err) return reject(err);
                     resolve(result);
                 });
             }
-
             oauth2Client.credentials = JSON.parse(token);
             resolve(oauth2Client);
         })
