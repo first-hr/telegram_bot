@@ -77,8 +77,8 @@ function makeTwentyMinutes(i, type) {
                 .then(doc => {
                     getRows(doc, globalObj.day)
                         .then(doc => {
-                            _.each(hours, one => {
-                                const found = _.find(doc, two => one === two);
+                            _.each(doc, one => {
+                                const found = _.find(hours, two => one === two);
                                 if (found) {
                                     hours.splice(hours.indexOf(found), 1);
                                 }

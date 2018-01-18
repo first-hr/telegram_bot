@@ -10,15 +10,15 @@ const TOKEN_PATH = `${__dirname}/sheets.googleapis.com-firsthr.json`;
 module.exports = {
     authorize
 };
-fs.readFile('client_secret.json', function processClientSecrets(err, content) {
-    if (err) {
-        console.log('Error loading client secret file: ' + err);
-        return;
-    }
-    // Authorize a client with the loaded credentials, then call the
-    // Google Sheets API.
-    authorize(JSON.parse(content));
-});
+// fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+//     if (err) {
+//         console.log('Error loading client secret file: ' + err);
+//         return;
+//     }
+//     // Authorize a client with the loaded credentials, then call the
+//     // Google Sheets API.
+//     authorize(JSON.parse(content));
+// });
 
 
 /**
