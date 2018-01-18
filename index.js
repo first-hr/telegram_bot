@@ -19,8 +19,11 @@ const globalObj = {};
  * Start Scene
  * @type {BaseScene}
  */
+
 const startScene = new Scene('start');
 startScene.enter(ctx => {
+    globalObj.fullname = `${ctx.message.from.first_name || ""} ${ctx.message.from.last_name || ""}`;
+    globalObj.chatId = ctx.message.chat.id;
     const time = moment.unix(ctx.update.message.date).format();
     const firstDay = moment(time).add(1, 'day').format('DD/MM/YYYY');
     const secondDay = moment(time).add(2, 'day').format('DD/MM/YYYY');
@@ -141,9 +144,11 @@ timeScene.leave(ctx => {
         // Authorize a client with the loaded credentials, then call the Google Sheets API.
         authorize(JSON.parse(content))
             .then(doc => {
-                addRow(doc, [globalObj.day, globalObj.hour])
+                addRow(doc, [globalObj.day, globalObj.hour, null,
+                    globalObj.fullname, null, null, null, 'В процессе', null, globalObj.chatId])
                     .then(doc => {
                         ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                        return ctx.replyWithLocation(55.738421, 37.663101);
                     })
                     .catch(console.error)
             })
