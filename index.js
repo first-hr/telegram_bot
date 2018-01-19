@@ -15,6 +15,32 @@ require('dotenv').config();
 const { enter, leave } = Stage;
 const globalObj = {};
 
+const phoneScene = new Scene('phone');
+phoneScene.enter(ctx => {
+    return ctx.reply('Как с вами связаться?', Markup
+        .keyboard([
+            Markup.contactRequestButton('Мой телефонный номер'),
+        ])
+        .oneTime()
+        .resize()
+        .extra()
+    )
+});
+phoneScene.on('message', ctx => {
+    if (ctx.message.contact) {
+        globalObj.phone = ctx.message.contact.phone_number;
+        return ctx.scene.enter('start');
+    }
+    return ctx.reply('Как с вами связаться?', Markup
+        .keyboard([
+            Markup.contactRequestButton('Мой телефонный номер'),
+        ])
+        .oneTime()
+        .resize()
+        .extra()
+    )
+});
+
 /**
  * Start Scene
  * @type {BaseScene}
@@ -22,22 +48,6 @@ const globalObj = {};
 
 const startScene = new Scene('start');
 startScene.enter(ctx => {
-    var option = {
-        "parse_mode": "Markdown",
-        "reply_markup": {
-            "one_time_keyboard": true,
-            "keyboard": [[{
-                text: "My phone number",
-                request_contact: true
-            }], ["Cancel"]]
-        }
-    };
-    return ctx.reply(ctx.message.chat.id, "How can we contact you?", option)
-        .then(() => {
-            bot.once("contact",(msg) => {
-                console.log(msg);
-            })
-    });
     globalObj.fullname = `${ctx.message.from.first_name || ""} ${ctx.message.from.last_name || ""}`;
     globalObj.chatId = ctx.message.chat.id;
     const time = moment.unix(ctx.update.message.date).format();
@@ -161,7 +171,7 @@ timeScene.leave(ctx => {
         authorize(JSON.parse(content))
             .then(doc => {
                 addRow(doc, [globalObj.day, globalObj.hour, null,
-                    globalObj.fullname, null, null, null, 'В процессе', null, globalObj.chatId])
+                    globalObj.fullname, globalObj.phone, null, null, 'В процессе', null, globalObj.chatId])
                     .then(doc => {
                         ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
                         return ctx.replyWithLocation(55.738421, 37.663101);
@@ -174,11 +184,11 @@ timeScene.leave(ctx => {
 timeScene.on('message', ctx => ctx.reply('Выберите время пожалуйста'));
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
-const stage = new Stage([startScene, dayScene, timeScene]);
+const stage = new Stage([startScene, dayScene, timeScene, phoneScene]);
 bot.use(session());
 bot.use(stage.middleware());
-bot.use(Telegraf.log());
-bot.command('start', enter('start'));
+// bot.use(Telegraf.log());
+bot.command('start', enter('phone'));
 
 bot.on('message', ctx => ctx.reply('Для активации бота нажмите /start'));
 bot.action(/.+/, ctx => ctx.reply('Для активации бота нажмите /start'));
