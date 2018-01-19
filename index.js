@@ -73,32 +73,42 @@ function makeTwentyMinutes(i, type) {
     const from = moment(ranges[i][0].toString(), 'h').format();
     const till = moment(ranges[i][1].toString(), 'h').format();
     const range = moment.range(from, till);
-    const hours = Array.from(range.by('minutes', { step: 20 }));
+    const hours = Array.from(range.by('minutes', { step: 20 })).map(one => one.format('HH:mm'));
     let j;
     const resultArr = [];
 
-    fs.readFile('client_secret.json', (err, content) => {
-        if (err) {
-            console.log('Error loading client secret file: ' + err);
-            return;
+    return new Promise((resolve, reject) => {
+        if (type) {
+            return resolve(hours)
         }
 
-        // Authorize a client with the loaded credentials, then call the Google Sheets API.
-        authorize(JSON.parse(content))
-            .then(doc => {
-                getRows(doc, '18/01/2018')
-            })
-            .catch(console.error)
-    });
+        fs.readFile('client_secret.json', (err, content) => {
+            if (err) {
+                console.log('Error loading client secret file: ' + err);
+                return;
+            }
 
-    if (type) {
-        return hours.map(one => one.format('HH:mm'))
-    }
-    hours.forEach(one => {
-        j = one.format('HH:mm');
-        resultArr.push(Markup.callbackButton(j, j))
+            // Authorize a client with the loaded credentials, then call the Google Sheets API.
+            authorize(JSON.parse(content))
+                .then(doc => {
+                    getRows(doc, globalObj.day)
+                        .then(doc => {
+                            _.each(doc, one => {
+                                const found = _.find(hours, two => one === two);
+                                if (found) {
+                                    hours.splice(hours.indexOf(found), 1);
+                                }
+                            });
+                            hours.forEach(one => {
+                                resultArr.push(Markup.callbackButton(one, one));
+                            });
+                            return resolve(_.chunk(resultArr, resultArr.length/3));
+                        })
+                        .catch(console.error)
+                })
+                .catch(console.error)
+        });
     });
-    return _.chunk(resultArr, resultArr.length/4);
 
 }
 
@@ -123,15 +133,22 @@ dayScene.on('message', (ctx) => ctx.reply('Выберите время суто�
  */
 const timeScene = new Scene('time');
 timeScene.enter(ctx => {
-    timeScene.action(makeTwentyMinutes(time.indexOf(globalObj.time), true), ctx => {
-        globalObj.hour = ctx.match;
-        ctx.scene.leave();
-    });
-    return ctx.reply('Выберите время суток',
-        Markup
-            .inlineKeyboard(makeTwentyMinutes(time.indexOf(globalObj.time)))
-            .extra()
-    )
+    makeTwentyMinutes(time.indexOf(globalObj.time), true)
+        .then(doc => {
+            timeScene.action(doc, ctx => {
+                globalObj.hour = ctx.match;
+                ctx.scene.leave();
+            });
+        }).catch(console.error);
+    makeTwentyMinutes(time.indexOf(globalObj.time))
+        .then(doc => {
+            return ctx.reply('Выберите время суток',
+                Markup
+                    .inlineKeyboard(doc)
+                    .extra()
+            )
+        })
+
 });
 timeScene.leave(ctx => {
     fs.readFile('client_secret.json', (err, content) => {

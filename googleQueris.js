@@ -39,7 +39,7 @@ module.exports = {
                 for (let i = 1; i < rows.length; i++) {
                     let row = rows[i];
                     if (date === row[0]) {
-                        array.push(row);
+                        array.push(row[1]);
                     }
                 }
                 return resolve(array)
