@@ -187,7 +187,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const stage = new Stage([startScene, dayScene, timeScene, phoneScene]);
 bot.use(session());
 bot.use(stage.middleware());
-// bot.use(Telegraf.log());
+bot.use(Telegraf.log());
 bot.command('start', enter('phone'));
 
 bot.on('message', ctx => ctx.reply('Для активации бота нажмите /start'));
