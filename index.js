@@ -22,6 +22,22 @@ const globalObj = {};
 
 const startScene = new Scene('start');
 startScene.enter(ctx => {
+    var option = {
+        "parse_mode": "Markdown",
+        "reply_markup": {
+            "one_time_keyboard": true,
+            "keyboard": [[{
+                text: "My phone number",
+                request_contact: true
+            }], ["Cancel"]]
+        }
+    };
+    return ctx.reply(ctx.message.chat.id, "How can we contact you?", option)
+        .then(() => {
+            bot.once("contact",(msg) => {
+                console.log(msg);
+            })
+    });
     globalObj.fullname = `${ctx.message.from.first_name || ""} ${ctx.message.from.last_name || ""}`;
     globalObj.chatId = ctx.message.chat.id;
     const time = moment.unix(ctx.update.message.date).format();
