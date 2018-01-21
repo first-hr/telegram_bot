@@ -1,19 +1,19 @@
 const Telegraf = require('telegraf');
 const fs = require('fs');
+require('./cron');
 const session = require('telegraf/session');
 const Markup = require('telegraf/markup');
 const Stage = require('telegraf/stage');
 const Scene = require('telegraf/scenes/base');
 const Extra = require('telegraf/extra');
 const { authorize } = require('./googleAuthorization');
-const { addRow, getRows } = require('./googleQueris');
+const { addRow, getRows, updateRow, getAllRows } = require('./googleQueris');
 const Moment = require('moment');
 const MomentRange = require('moment-range');
 const _ = require('lodash');
 const moment = MomentRange.extendMoment(Moment);
 require('dotenv').config();
 const { enter, leave } = Stage;
-const globalObj = {};
 
 const phoneScene = new Scene('phone');
 phoneScene.enter(ctx => {
@@ -170,13 +170,39 @@ timeScene.leave(ctx => {
         // Authorize a client with the loaded credentials, then call the Google Sheets API.
         authorize(JSON.parse(content))
             .then(doc => {
-                addRow(doc, [globalObj.day, globalObj.hour, null,
-                    globalObj.fullname, globalObj.phone, null, null, 'В процессе', null, globalObj.chatId])
-                    .then(doc => {
-                        ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
-                        return ctx.replyWithLocation(55.738421, 37.663101);
-                    })
-                    .catch(console.error)
+                getAllRows(doc)
+                    .then(data => {
+                        const array = [];
+                        let index = 0;
+                        for (let i = 1; i < data.length; i++) {
+                            let row = data[i];
+                            if (globalObj.chatId.toString() === row[9]) {
+                                index = ++i;
+                                array.push(row);
+                            }
+                        }
+                        if (_.isEmpty(array)) {
+                            addRow(doc, [globalObj.day, globalObj.hour, null,
+                                globalObj.fullname, globalObj.phone, null, null, 'В процессе', null, globalObj.chatId])
+                                .then(doc => {
+                                    ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                                    return ctx.replyWithLocation(55.738421, 37.663101);
+                                })
+                                .catch(console.error);
+                            return;
+                        }
+
+                        updateRow(doc, [globalObj.day, globalObj.hour, null,
+                            globalObj.fullname, globalObj.phone, null, null, 'В процессе', null, globalObj.chatId]
+                            , `A${index}:J${index}`)
+                            .then(doc => {
+                                ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                                return ctx.replyWithLocation(55.738421, 37.663101);
+                            })
+                            .catch(console.error);
+                    });
+
+
             })
             .catch(console.error)
     });
@@ -187,10 +213,67 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const stage = new Stage([startScene, dayScene, timeScene, phoneScene]);
 bot.use(session());
 bot.use(stage.middleware());
-bot.use(Telegraf.log());
+// bot.use(Telegraf.log());
 bot.command('start', enter('phone'));
 
-bot.on('message', ctx => ctx.reply('Для активации бота нажмите /start'));
+bot.hears('Да, я приду', ctx => {
+    ctx.reply('Отлично, до встречи');
+    const key = ctx.message.chat.id.toString();
+    const rowInfo = globalObj[key];
+    fs.readFile('client_secret.json', (err, content) => {
+        if (err) {
+            console.log('Error loading client secret file: ' + err);
+            return;
+        }
+
+        // Authorize a client with the loaded credentials, then call the Google Sheets API.
+        authorize(JSON.parse(content))
+            .then(doc => {
+                updateRow(doc, ['Согласен'], `H${rowInfo[rowInfo.length-1]}`)
+                    .then(() => delete globalObj[key])
+                    .catch(console.error)
+            })
+            .catch(console.error)
+    });
+});
+bot.hears('К сожалению, Нет', ctx => {
+    ctx.reply('Вы отменили собеседование, наш сотрудник свяжеться с вами');
+    const key = ctx.message.chat.id.toString();
+    const rowInfo = globalObj[key];
+    fs.readFile('client_secret.json', (err, content) => {
+        if (err) {
+            console.log('Error loading client secret file: ' + err);
+            return;
+        }
+
+        // Authorize a client with the loaded credentials, then call the Google Sheets API.
+        authorize(JSON.parse(content))
+            .then(doc => {
+                updateRow(doc, ['отменен'], `H${rowInfo[rowInfo.length-1]}`)
+                    .then(() => delete globalObj[key])
+                    .catch(console.error)
+            })
+            .catch(console.error)
+    });
+});
+bot.on('message', ctx => {
+    const key = ctx.message.chat.id.toString();
+    if (globalObj[key]) {
+        return ctx.reply('Утвердите пожалуйста', Markup
+            .keyboard([
+                [
+                    {"text": "Да, я приду"},
+                    {"text": "К сожалению, Нет"}
+                ]
+            ])
+            .oneTime()
+            .resize()
+            .extra()
+        )
+    }
+
+    ctx.reply('Для активации бота нажмите /start')
+});
 bot.action(/.+/, ctx => ctx.reply('Для активации бота нажмите /start'));
 
 bot.startPolling();

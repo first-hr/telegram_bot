@@ -45,5 +45,44 @@ module.exports = {
                 return resolve(array)
             });
         });
+    },
+
+    updateRow: (auth, data, range) => {
+        return new Promise((resolve, reject) => {
+            sheets.spreadsheets.values.update({
+                auth,
+                spreadsheetId,
+                range,
+                valueInputOption: 'RAW',
+                resource: {
+                    values: [data]
+                }
+            }, (err, response) => {
+                if (err) {
+                    console.log('The API returned an error: ' + err);
+                    return reject(err);
+                }
+                const rows = response.values;
+                return resolve(rows)
+            });
+        });
+    },
+
+    getAllRows: auth => {
+        return new Promise((resolve, reject) => {
+            sheets.spreadsheets.values.get({
+                auth,
+                spreadsheetId,
+                range: 'A:J',
+            }, (err, response) => {
+                if (err) {
+                    console.log('The API returned an error: ' + err);
+                    return reject(err);
+                }
+                const rows = response.values;
+                return resolve(rows)
+            });
+        });
     }
+
 };
