@@ -9,7 +9,7 @@ const _ = require('lodash');
 global.globalObj = {};
 
 const job = new CronJob({
-    cronTime: '00 31 21 * * 0-6',
+    cronTime: '00 50 11 * * 0-6',
     onTick: function() {
         fs.readFile('client_secret.json', (err, content) => {
             if (err) {
@@ -50,7 +50,7 @@ const job = new CronJob({
                                         ]
                                     ],
                                     one_time_keyboard: true,
-                                    resize_keyboard: true
+                                    // resize_keyboard: true
                                 };
                                 request.post(URL, {form: {
                                     chat_id: CHATID,
