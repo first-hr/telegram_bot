@@ -18,26 +18,24 @@ const { enter, leave } = Stage;
 
 const phoneScene = new Scene('phone');
 phoneScene.enter(ctx => {
-    return ctx.reply(texts.howToConnect, Markup
-        .keyboard([
-            Markup.contactRequestButton(texts.answerButton),
-        ])
-        .oneTime()
-        .extra()
-    )
+    return ctx.reply(texts.howToConnect, Extra.markup((markup) => {
+        return markup
+            .keyboard([
+                markup.contactRequestButton(texts.answerButton),
+            ])
+    }))
 });
 phoneScene.on('message', ctx => {
     if (ctx.message.contact) {
         globalObj.phone = ctx.message.contact.phone_number;
         return ctx.scene.enter('start');
     }
-    return ctx.reply(texts.howToConnect, Markup
-        .keyboard([
-            Markup.contactRequestButton(texts.answerButton),
-        ])
-        .oneTime()
-        .extra()
-    )
+    return ctx.reply(texts.howToConnect, Extra.markup((markup) => {
+        return markup
+            .keyboard([
+                markup.contactRequestButton(texts.answerButton),
+            ])
+    }))
 });
 
 /**
