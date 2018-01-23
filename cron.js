@@ -6,6 +6,7 @@ const fs = require('fs');
 const request = require('request');
 const moment = require('moment');
 const _ = require('lodash');
+const texts = require('./texts');
 global.globalObj = {};
 
 const job = new CronJob({
@@ -45,8 +46,8 @@ const job = new CronJob({
                                 const keyboard = {
                                     keyboard: [
                                         [
-                                            {"text": "Да, я приду"},
-                                            {"text": "К сожалению, Нет"}
+                                            {"text": texts.yesAnswer},
+                                            {"text": texts.noAnswer}
                                         ]
                                     ],
                                     one_time_keyboard: true,
@@ -70,43 +71,6 @@ const job = new CronJob({
                 })
                 .catch(console.error)
         });
-
-        // const CHATID="206456028";
-        // const URL=`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
-        // const TEXT="Добрый день, Вам назначено собеседование на 14:00 20/01/2018";
-        // const keyboard = {
-        //     // inline_keyboard: [
-        //     //     [
-        //     //         {"text": "Да", "callback_data": "yes"},
-        //     //         {"text": "Нет", "callback_data": "no"}
-        //     //     ]
-        //     // ]
-        //     keyboard: [
-        //         [
-        //             {"text": "Да, я приду"},
-        //             {"text": "К сожалению, Нет"}
-        //         ]
-        //     ],
-        //     one_time_keyboard: true,
-        //     resize_keyboard: true
-        // };
-        // request.post(URL, {form: {
-        //     chat_id: CHATID,
-        //     disable_web_page_preview: 1,
-        //     text: TEXT,
-        //     reply_markup: JSON.stringify(keyboard)
-        // }}, function(error, response, body){
-        //     if (error) {
-        //         console.error(error)
-        //     }
-        //     console.log(body);
-        // });
-
-        /*
-         * Runs every weekday (Monday through Friday)
-         * at 11:30:00 AM. It does not run on Saturday
-         * or Sunday.
-         */
     },
     start: false,
     timeZone: 'Europe/Moscow'

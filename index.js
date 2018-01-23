@@ -13,13 +13,14 @@ const MomentRange = require('moment-range');
 const _ = require('lodash');
 const moment = MomentRange.extendMoment(Moment);
 require('dotenv').config();
+const texts = require('./texts');
 const { enter, leave } = Stage;
 
 const phoneScene = new Scene('phone');
 phoneScene.enter(ctx => {
-    return ctx.reply('Как с вами связаться?', Markup
+    return ctx.reply(texts.howToConnect, Markup
         .keyboard([
-            Markup.contactRequestButton('Мой телефонный номер'),
+            Markup.contactRequestButton(texts.answerButton),
         ])
         .oneTime()
         .resize()
@@ -31,9 +32,9 @@ phoneScene.on('message', ctx => {
         globalObj.phone = ctx.message.contact.phone_number;
         return ctx.scene.enter('start');
     }
-    return ctx.reply('Как с вами связаться?', Markup
+    return ctx.reply(texts.howToConnect, Markup
         .keyboard([
-            Markup.contactRequestButton('Мой телефонный номер'),
+            Markup.contactRequestButton(texts.answerButton),
         ])
         .oneTime()
         .resize()
@@ -61,13 +62,13 @@ startScene.enter(ctx => {
         globalObj.day = secondDay;
         ctx.scene.enter('day')
     });
-    return ctx.reply('когда вам удобно пройти собеседование: ', Extra.HTML().markup((m) =>
+    return ctx.reply(texts.chooseDay, Extra.HTML().markup((m) =>
         m.inlineKeyboard([
             m.callbackButton(firstDay, 'day1'),
             m.callbackButton(secondDay, 'day2')
         ])))
 });
-startScene.on('message', ctx => ctx.reply('Выберите день'));
+startScene.on('message', ctx => ctx.reply(texts.dayDefValue));
 
 /**
  * Day Scene
@@ -123,7 +124,7 @@ function makeTwentyMinutes(i, type) {
 }
 
 dayScene.enter((ctx) => {
-    return ctx.reply('Выберите время суток', Extra.markup(m =>
+    return ctx.reply(texts.chooseRange, Extra.markup(m =>
         m.inlineKeyboard([
             m.callbackButton(time[0], time[0]),
             m.callbackButton(time[1], time[1]),
@@ -136,11 +137,12 @@ dayScene.action(time, ctx => {
     ctx.scene.enter('time');
 });
 dayScene.command('cancel', leave());
-dayScene.on('message', (ctx) => ctx.reply('Выберите время суток'));
+dayScene.on('message', (ctx) => ctx.reply(texts.chooseRange));
 
 /**
  * Time Scene
  */
+
 const timeScene = new Scene('time');
 timeScene.enter(ctx => {
     makeTwentyMinutes(time.indexOf(globalObj.time), true)
@@ -152,7 +154,7 @@ timeScene.enter(ctx => {
         }).catch(console.error);
     makeTwentyMinutes(time.indexOf(globalObj.time))
         .then(doc => {
-            return ctx.reply('Выберите время суток',
+            return ctx.reply(texts.chooseRange,
                 Markup
                     .inlineKeyboard(doc)
                     .extra()
@@ -183,7 +185,7 @@ timeScene.leave(ctx => {
                         }
                         if (_.isEmpty(array)) {
                             addRow(doc, [globalObj.day, globalObj.hour, null,
-                                globalObj.fullname, globalObj.phone, null, null, 'В процессе', null, globalObj.chatId])
+                                globalObj.fullname, globalObj.phone, null, null, 'в процессе', null, globalObj.chatId])
                                 .then(doc => {
                                     ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
                                     return ctx.replyWithLocation(55.738421, 37.663101);
@@ -193,7 +195,7 @@ timeScene.leave(ctx => {
                         }
 
                         updateRow(doc, [globalObj.day, globalObj.hour, null,
-                            globalObj.fullname, globalObj.phone, null, null, 'В процессе', null, globalObj.chatId]
+                            globalObj.fullname, globalObj.phone, null, null, 'в процессе', null, globalObj.chatId]
                             , `A${index}:J${index}`)
                             .then(doc => {
                                 ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
@@ -207,7 +209,7 @@ timeScene.leave(ctx => {
             .catch(console.error)
     });
 });
-timeScene.on('message', ctx => ctx.reply('Выберите время пожалуйста'));
+timeScene.on('message', ctx => ctx.reply(texts.timeDefValue));
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const stage = new Stage([startScene, dayScene, timeScene, phoneScene]);
@@ -216,8 +218,8 @@ bot.use(stage.middleware());
 bot.use(Telegraf.log());
 bot.command('start', enter('phone'));
 
-bot.hears('Да, я приду', ctx => {
-    ctx.reply('Отлично, до встречи');
+bot.hears(texts.yesAnswer, ctx => {
+    ctx.reply(texts.afterYes);
     const key = ctx.message.chat.id.toString();
     const rowInfo = globalObj[key];
     fs.readFile('client_secret.json', (err, content) => {
@@ -225,8 +227,6 @@ bot.hears('Да, я приду', ctx => {
             console.log('Error loading client secret file: ' + err);
             return;
         }
-
-        // Authorize a client with the loaded credentials, then call the Google Sheets API.
         authorize(JSON.parse(content))
             .then(doc => {
                 updateRow(doc, ['Согласен'], `H${rowInfo[rowInfo.length-1]}`)
@@ -236,8 +236,8 @@ bot.hears('Да, я приду', ctx => {
             .catch(console.error)
     });
 });
-bot.hears('К сожалению, Нет', ctx => {
-    ctx.reply('Вы отменили собеседование, наш сотрудник свяжеться с вами');
+bot.hears(texts.noAnswer, ctx => {
+    ctx.reply(texts.afterNo);
     const key = ctx.message.chat.id.toString();
     const rowInfo = globalObj[key];
     fs.readFile('client_secret.json', (err, content) => {
@@ -259,11 +259,11 @@ bot.hears('К сожалению, Нет', ctx => {
 bot.on('message', ctx => {
     const key = ctx.message.chat.id.toString();
     if (globalObj[key]) {
-        return ctx.reply('Утвердите пожалуйста', Markup
+        return ctx.reply(texts.notificationMsg, Markup
             .keyboard([
                 [
-                    {"text": "Да, я приду"},
-                    {"text": "К сожалению, Нет"}
+                    {"text": texts.yesAnswer},
+                    {"text": texts.noAnswer}
                 ]
             ])
             .oneTime()
@@ -271,8 +271,8 @@ bot.on('message', ctx => {
         )
     }
 
-    ctx.reply('Для активации бота нажмите /start')
+    ctx.reply(texts.activation)
 });
-bot.action(/.+/, ctx => ctx.reply('Для активации бота нажмите /start'));
+bot.action(/.+/, ctx => ctx.reply(texts.activation));
 
 bot.startPolling();
