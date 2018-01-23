@@ -10,7 +10,7 @@ const texts = require('./texts');
 global.globalObj = {};
 
 const job = new CronJob({
-    cronTime: '00 30 10 * * 0-6',
+    cronTime: '00 32 10 * * 0-6',
     onTick: function() {
         fs.readFile('client_secret.json', (err, content) => {
             if (err) {
