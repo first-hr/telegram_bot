@@ -15,7 +15,6 @@ const moment = MomentRange.extendMoment(Moment);
 require('dotenv').config();
 const texts = require('./texts');
 const { enter, leave } = Stage;
-console.log(new Date());
 
 const phoneScene = new Scene('phone');
 phoneScene.enter(ctx => {
