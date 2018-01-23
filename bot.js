@@ -23,7 +23,6 @@ phoneScene.enter(ctx => {
             Markup.contactRequestButton(texts.answerButton),
         ])
         .oneTime()
-        .resize()
         .extra()
     )
 });
@@ -37,7 +36,6 @@ phoneScene.on('message', ctx => {
             Markup.contactRequestButton(texts.answerButton),
         ])
         .oneTime()
-        .resize()
         .extra()
     )
 });
