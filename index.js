@@ -1,2 +1,2 @@
-var bot = require('./bot');
+const bot = require('./bot');
 require('./web')(bot);
