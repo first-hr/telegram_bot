@@ -271,4 +271,5 @@ bot.on('message', ctx => {
 });
 bot.action(/.+/, ctx => ctx.reply(texts.activation));
 
+
 bot.startPolling();
