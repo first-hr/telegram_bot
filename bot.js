@@ -48,8 +48,25 @@ startScene.enter(ctx => {
     globalObj.fullname = `${ctx.message.from.first_name || ""} ${ctx.message.from.last_name || ""}`;
     globalObj.chatId = ctx.message.chat.id;
     const time = moment.unix(ctx.update.message.date).format();
-    const firstDay = moment(time).add(1, 'day').format('DD/MM/YYYY');
-    const secondDay = moment(time).add(2, 'day').format('DD/MM/YYYY');
+    let firstDay, secondDay;
+    switch (moment(time).isoWeekday()) {
+        case 4:
+            firstDay = moment(time).add(1, 'day').format('DD/MM/YYYY');
+            secondDay = moment(time).add(4, 'day').format('DD/MM/YYYY');
+            break;
+        case 5:
+            firstDay = moment(time).add(3, 'day').format('DD/MM/YYYY');
+            secondDay = moment(time).add(4, 'day').format('DD/MM/YYYY');
+            break;
+        case 6:
+            firstDay = moment(time).add(2, 'day').format('DD/MM/YYYY');
+            secondDay = moment(time).add(3, 'day').format('DD/MM/YYYY');
+            break;
+        default:
+            firstDay = moment(time).add(1, 'day').format('DD/MM/YYYY');
+            secondDay = moment(time).add(2, 'day').format('DD/MM/YYYY');
+            break;
+    }
     startScene.action('day1', ctx => {
         globalObj.day = firstDay;
         ctx.scene.enter('day')
@@ -81,7 +98,6 @@ function makeTwentyMinutes(i, type) {
     const till = moment(ranges[i][1].toString(), 'h').format();
     const range = moment.range(from, till);
     const hours = Array.from(range.by('minutes', { step: 20 })).map(one => one.format('HH:mm'));
-    let j;
     const resultArr = [];
 
     return new Promise((resolve, reject) => {
@@ -150,7 +166,7 @@ timeScene.enter(ctx => {
         }).catch(console.error);
     makeTwentyMinutes(time.indexOf(globalObj.time))
         .then(doc => {
-            return ctx.reply(texts.chooseRange,
+            return ctx.reply(texts.timeDefValue,
                 Markup
                     .inlineKeyboard(doc)
                     .extra()
@@ -203,7 +219,8 @@ timeScene.leave(ctx => {
 Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
 
 Если заблудились то можете связаться с нами по телефону +79017875668`);
-                                return ctx.replyWithLocation(55.738421, 37.663101);
+                                return ctx.replyWithPhoto({ source: './scheme.png'});
+                                // return ctx.replyWithLocation(55.738421, 37.663101);
                             })
                             .catch(console.error);
                     });
