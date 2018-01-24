@@ -19,7 +19,7 @@ const { enter, leave } = Stage;
 const phoneScene = new Scene('phone');
 phoneScene.enter(ctx => {
     return ctx.reply(texts.howToConnect, Extra.markup((markup) => {
-        return markup
+        return markup.resize()
             .keyboard([
                 markup.contactRequestButton(texts.answerButton),
             ])
@@ -31,7 +31,7 @@ phoneScene.on('message', ctx => {
         return ctx.scene.enter('start');
     }
     return ctx.reply(texts.howToConnect, Extra.markup((markup) => {
-        return markup
+        return markup.resize()
             .keyboard([
                 markup.contactRequestButton(texts.answerButton),
             ])
