@@ -9,8 +9,7 @@ const _ = require('lodash');
 const texts = require('./texts');
 global.globalObj = {};
 
-const job = new CronJob({
-    cronTime: '00 30 09 * * 0-6',
+const cronContext = {
     onTick: function() {
         fs.readFile('client_secret.json', (err, content) => {
             if (err) {
@@ -74,6 +73,18 @@ const job = new CronJob({
     },
     start: false,
     timeZone: 'Europe/Moscow'
+};
+
+const job = new CronJob({
+    cronTime: '00 30 09 * * 0-6',
+    ...cronContext
 });
 
+const job2 = new CronJob({
+    cronTime: '00 30 12 * * 0-6',
+    ...cronContext
+});
+
+
 job.start();
+job2.start();

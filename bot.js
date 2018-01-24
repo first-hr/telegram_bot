@@ -183,7 +183,10 @@ timeScene.leave(ctx => {
                             addRow(doc, [globalObj.day, globalObj.hour, null,
                                 globalObj.fullname, globalObj.phone, null, null, 'в процессе', null, globalObj.chatId])
                                 .then(doc => {
-                                    ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                                    // ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                                    ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj.day}/${globalObj.hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
+ Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
+ Если заблудились то можете связаться с нами по телефону +79258882091 Екатерина`);
                                     return ctx.replyWithLocation(55.738421, 37.663101);
                                 })
                                 .catch(console.error);
@@ -194,7 +197,12 @@ timeScene.leave(ctx => {
                             globalObj.fullname, globalObj.phone, null, null, 'в процессе', null, globalObj.chatId]
                             , `A${index}:J${index}`)
                             .then(doc => {
-                                ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                                // ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
+                                ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj.day} в ${globalObj.hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
+
+Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
+
+Если заблудились то можете связаться с нами по телефону +79258882091 Екатерина`);
                                 return ctx.replyWithLocation(55.738421, 37.663101);
                             })
                             .catch(console.error);
