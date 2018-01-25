@@ -250,9 +250,17 @@ bot.hears(texts.yesAnswer, ctx => {
         }
         authorize(JSON.parse(content))
             .then(doc => {
-                updateRow(doc, ['Согласен'], `H${rowInfo[rowInfo.length-1]}`)
-                    .then(() => delete globalObj[key])
-                    .catch(console.error)
+                getAllRows(doc)
+                    .then(data => {
+                        let rowNumber = 0;
+                        for (let i = 1; i < data.length; i++) {
+                            let row = data[i];
+                            if (key === row[9]) rowNumber = 1 + i;
+                        }
+                        updateRow(doc, ['согласен'], `H${rowNumber}`)
+                            .then(() => delete globalObj[key])
+                            .catch(console.error)
+                    });
             })
             .catch(console.error)
     });
@@ -270,9 +278,18 @@ bot.hears(texts.noAnswer, ctx => {
         // Authorize a client with the loaded credentials, then call the Google Sheets API.
         authorize(JSON.parse(content))
             .then(doc => {
-                updateRow(doc, ['отменен'], `H${rowInfo[rowInfo.length-1]}`)
-                    .then(() => delete globalObj[key])
-                    .catch(console.error)
+                getAllRows(doc)
+                    .then(data => {
+                        let rowNumber = 0;
+                        for (let i = 1; i < data.length; i++) {
+                            let row = data[i];
+                            if (key === row[9]) rowNumber = 1 + i;
+                        }
+                        updateRow(doc, ['отменен'], `H${rowNumber}`)
+                            .then(() => delete globalObj[key])
+                            .catch(console.error)
+                    });
+
             })
             .catch(console.error)
     });
