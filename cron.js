@@ -7,7 +7,7 @@ const request = require('request');
 const moment = require('moment');
 const _ = require('lodash');
 const texts = require('./texts');
-global.globalObj = {};
+global.globalObject = {};
 
 const cronContext = {
     onTick: function() {
@@ -29,7 +29,7 @@ const cronContext = {
                                 let row = data[i];
                                 if (today === row[0]) {
                                     row.push(1 + i);
-                                    globalObj[row[9]] = row;
+                                    globalObject[row[9]] = row;
                                     array.push(row);
                                 }
                             }

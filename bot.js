@@ -15,6 +15,7 @@ const moment = MomentRange.extendMoment(Moment);
 require('dotenv').config();
 const texts = require('./texts');
 const { enter, leave } = Stage;
+const globalObj = {};
 
 const phoneScene = new Scene('phone');
 phoneScene.enter(ctx => {
@@ -27,7 +28,11 @@ phoneScene.enter(ctx => {
 });
 phoneScene.on('message', ctx => {
     if (ctx.message.contact) {
-        globalObj.phone = ctx.message.contact.phone_number;
+        globalObj[ctx.message.chat.id] = {
+            id: ctx.message.chat.id
+        };
+        globalObj[ctx.message.chat.id].phone = ctx.message.contact.phone_number;
+        globalObj[ctx.message.chat.id].fullname = `${ctx.message.from.first_name || ""} ${ctx.message.from.last_name || ""}`;
         return ctx.scene.enter('start');
     }
     return ctx.reply(texts.howToConnect, Extra.markup((markup) => {
@@ -45,8 +50,6 @@ phoneScene.on('message', ctx => {
 
 const startScene = new Scene('start');
 startScene.enter(ctx => {
-    globalObj.fullname = `${ctx.message.from.first_name || ""} ${ctx.message.from.last_name || ""}`;
-    globalObj.chatId = ctx.message.chat.id;
     const time = moment.unix(ctx.update.message.date).format();
     let firstDay, secondDay;
     switch (moment(time).isoWeekday()) {
@@ -67,18 +70,18 @@ startScene.enter(ctx => {
             secondDay = moment(time).add(2, 'day').format('DD/MM/YYYY');
             break;
     }
-    startScene.action('day1', ctx => {
-        globalObj.day = firstDay;
+    startScene.action(firstDay, ctx => {
+        globalObj[ctx.update.callback_query.from.id].day = firstDay;
         ctx.scene.enter('day')
     });
-    startScene.action('day2', ctx => {
-        globalObj.day = secondDay;
+    startScene.action(secondDay, ctx => {
+        globalObj[ctx.update.callback_query.from.id].day = secondDay;
         ctx.scene.enter('day')
     });
     return ctx.reply(texts.chooseDay, Extra.HTML().markup((m) =>
         m.inlineKeyboard([
-            m.callbackButton(firstDay, 'day1'),
-            m.callbackButton(secondDay, 'day2')
+            m.callbackButton(firstDay, firstDay),
+            m.callbackButton(secondDay, secondDay)
         ])))
 });
 startScene.on('message', ctx => ctx.reply(texts.dayDefValue));
@@ -93,7 +96,7 @@ const ranges = [
     [13, 16],
     [16, 19]
 ];
-function makeTwentyMinutes(i, type) {
+function makeTwentyMinutes(ctx, i, type) {
     const from = moment(ranges[i][0].toString(), 'h').format();
     const till = moment(ranges[i][1].toString(), 'h').format();
     const range = moment.range(from, till);
@@ -114,7 +117,7 @@ function makeTwentyMinutes(i, type) {
             // Authorize a client with the loaded credentials, then call the Google Sheets API.
             authorize(JSON.parse(content))
                 .then(doc => {
-                    getRows(doc, globalObj.day)
+                    getRows(doc, globalObj[ctx.update.callback_query.from.id].day)
                         .then(doc => {
                             _.each(doc, one => {
                                 const found = _.find(hours, two => one === two);
@@ -145,7 +148,7 @@ dayScene.enter((ctx) => {
 
 });
 dayScene.action(time, ctx => {
-    globalObj.time = ctx.match;
+    globalObj[ctx.update.callback_query.from.id].time = ctx.match;
     ctx.scene.enter('time');
 });
 dayScene.command('cancel', leave());
@@ -157,14 +160,14 @@ dayScene.on('message', (ctx) => ctx.reply(texts.chooseRange));
 
 const timeScene = new Scene('time');
 timeScene.enter(ctx => {
-    makeTwentyMinutes(time.indexOf(globalObj.time), true)
+    makeTwentyMinutes(ctx, time.indexOf(globalObj[ctx.update.callback_query.from.id].time), true)
         .then(doc => {
             timeScene.action(doc, ctx => {
-                globalObj.hour = ctx.match;
+                globalObj[ctx.update.callback_query.from.id].hour = ctx.match;
                 ctx.scene.leave();
             });
         }).catch(console.error);
-    makeTwentyMinutes(time.indexOf(globalObj.time))
+    makeTwentyMinutes(ctx, time.indexOf(globalObj[ctx.update.callback_query.from.id].time))
         .then(doc => {
             return ctx.reply(texts.timeDefValue,
                 Markup
@@ -190,35 +193,37 @@ timeScene.leave(ctx => {
                         let index = 0;
                         for (let i = 1; i < data.length; i++) {
                             let row = data[i];
-                            if (globalObj.chatId.toString() === row[9]) {
+                            if (globalObj[ctx.update.callback_query.from.id].id.toString() === row[9]) {
                                 index = ++i;
                                 array.push(row);
                             }
                         }
                         if (_.isEmpty(array)) {
-                            addRow(doc, [globalObj.day, globalObj.hour, null,
-                                globalObj.fullname, globalObj.phone, null, null, 'в процессе', null, globalObj.chatId])
+                            addRow(doc, [globalObj[ctx.update.callback_query.from.id].day, globalObj[ctx.update.callback_query.from.id].hour, null,
+                                globalObj[ctx.update.callback_query.from.id].fullname, globalObj[ctx.update.callback_query.from.id].phone, null, null, 'в процессе', null, globalObj[ctx.update.callback_query.from.id].id])
                                 .then(doc => {
                                     // ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
-                                    ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj.day}/${globalObj.hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
+                                    ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day}/${globalObj[ctx.update.callback_query.from.id].hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
  Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
  Если заблудились то можете связаться с нами по телефону +79258882091 Екатерина`);
+                                    delete globalObj[ctx.update.callback_query.from.id];
                                     return ctx.replyWithLocation(55.738421, 37.663101);
                                 })
                                 .catch(console.error);
                             return;
                         }
 
-                        updateRow(doc, [globalObj.day, globalObj.hour, null,
-                            globalObj.fullname, globalObj.phone, null, null, 'в процессе', null, globalObj.chatId]
+                        updateRow(doc, [globalObj[ctx.update.callback_query.from.id].day, globalObj[ctx.update.callback_query.from.id].hour, null,
+                                globalObj[ctx.update.callback_query.from.id].fullname, globalObj[ctx.update.callback_query.from.id].phone, null, null, 'в процессе', null, globalObj[ctx.update.callback_query.from.id].id]
                             , `A${index}:J${index}`)
                             .then(doc => {
                                 // ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
-                                ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj.day} в ${globalObj.hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
+                                ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day} в ${globalObj[ctx.update.callback_query.from.id].hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
 
 Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
 
 Если заблудились то можете связаться с нами по телефону +79017875668`);
+                                delete globalObj[ctx.update.callback_query.from.id];
                                 return ctx.replyWithPhoto({ source: './scheme.png'});
                                 // return ctx.replyWithLocation(55.738421, 37.663101);
                             })
@@ -236,13 +241,13 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const stage = new Stage([startScene, dayScene, timeScene, phoneScene]);
 bot.use(session());
 bot.use(stage.middleware());
-bot.use(Telegraf.log());
+// bot.use(Telegraf.log());
 bot.command('start', enter('phone'));
 
 bot.hears(texts.yesAnswer, ctx => {
     ctx.reply(texts.afterYes);
     const key = ctx.message.chat.id.toString();
-    const rowInfo = globalObj[key];
+    const rowInfo = globalObject[key];
     fs.readFile('client_secret.json', (err, content) => {
         if (err) {
             console.log('Error loading client secret file: ' + err);
@@ -258,7 +263,7 @@ bot.hears(texts.yesAnswer, ctx => {
                             if (key === row[9]) rowNumber = 1 + i;
                         }
                         updateRow(doc, ['согласен'], `H${rowNumber}`)
-                            .then(() => delete globalObj[key])
+                            .then(() => delete globalObject[key])
                             .catch(console.error)
                     });
             })
@@ -268,7 +273,7 @@ bot.hears(texts.yesAnswer, ctx => {
 bot.hears(texts.noAnswer, ctx => {
     ctx.reply(texts.afterNo);
     const key = ctx.message.chat.id.toString();
-    const rowInfo = globalObj[key];
+    const rowInfo = globalObject[key];
     fs.readFile('client_secret.json', (err, content) => {
         if (err) {
             console.log('Error loading client secret file: ' + err);
@@ -286,7 +291,7 @@ bot.hears(texts.noAnswer, ctx => {
                             if (key === row[9]) rowNumber = 1 + i;
                         }
                         updateRow(doc, ['отменен'], `H${rowNumber}`)
-                            .then(() => delete globalObj[key])
+                            .then(() => delete globalObject[key])
                             .catch(console.error)
                     });
 
@@ -296,7 +301,7 @@ bot.hears(texts.noAnswer, ctx => {
 });
 bot.on('message', ctx => {
     const key = ctx.message.chat.id.toString();
-    if (globalObj[key]) {
+    if (globalObject[key]) {
         return ctx.reply(texts.notificationMsg, Markup
             .keyboard([
                 [
