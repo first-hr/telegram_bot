@@ -28,11 +28,13 @@ const cronContext = {
                             for (let i = 1; i < data.length; i++) {
                                 let row = data[i];
                                 if (today === row[0]) {
-                                    row.push(1 + i);
-                                    globalObject[row[9]] = row;
-                                    array.push(row);
+                                    if (texts.processing === row[7]) {
+                                        globalObject[row[9]] = row;
+                                        array.push(row);
+                                    }
                                 }
                             }
+
                             if (!_.isEmpty(array)) {
                                 index = array.length - 1;
                                 recursiveSendMessage(array[index])

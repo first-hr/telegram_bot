@@ -200,21 +200,21 @@ timeScene.leave(ctx => {
                         }
                         if (_.isEmpty(array)) {
                             addRow(doc, [globalObj[ctx.update.callback_query.from.id].day, globalObj[ctx.update.callback_query.from.id].hour, null,
-                                globalObj[ctx.update.callback_query.from.id].fullname, globalObj[ctx.update.callback_query.from.id].phone, null, null, 'в процессе', null, globalObj[ctx.update.callback_query.from.id].id])
+                                globalObj[ctx.update.callback_query.from.id].fullname, globalObj[ctx.update.callback_query.from.id].phone, null, null, texts.processing, null, globalObj[ctx.update.callback_query.from.id].id])
                                 .then(doc => {
                                     // ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
                                     ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day}/${globalObj[ctx.update.callback_query.from.id].hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
  Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
  Если заблудились то можете связаться с нами по телефону +79258882091 Екатерина`);
                                     delete globalObj[ctx.update.callback_query.from.id];
-                                    return ctx.replyWithLocation(55.738421, 37.663101);
+                                    return ctx.replyWithPhoto({ source: './scheme.png'});
                                 })
                                 .catch(console.error);
                             return;
                         }
 
                         updateRow(doc, [globalObj[ctx.update.callback_query.from.id].day, globalObj[ctx.update.callback_query.from.id].hour, null,
-                                globalObj[ctx.update.callback_query.from.id].fullname, globalObj[ctx.update.callback_query.from.id].phone, null, null, 'в процессе', null, globalObj[ctx.update.callback_query.from.id].id]
+                                globalObj[ctx.update.callback_query.from.id].fullname, globalObj[ctx.update.callback_query.from.id].phone, null, null, texts.processing, null, globalObj[ctx.update.callback_query.from.id].id]
                             , `A${index}:J${index}`)
                             .then(doc => {
                                 // ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
@@ -225,7 +225,6 @@ timeScene.leave(ctx => {
 Если заблудились то можете связаться с нами по телефону +79017875668`);
                                 delete globalObj[ctx.update.callback_query.from.id];
                                 return ctx.replyWithPhoto({ source: './scheme.png'});
-                                // return ctx.replyWithLocation(55.738421, 37.663101);
                             })
                             .catch(console.error);
                     });
@@ -241,7 +240,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const stage = new Stage([startScene, dayScene, timeScene, phoneScene]);
 bot.use(session());
 bot.use(stage.middleware());
-// bot.use(Telegraf.log());
+bot.use(Telegraf.log());
 bot.command('start', enter('phone'));
 
 bot.hears(texts.yesAnswer, ctx => {
