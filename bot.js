@@ -203,11 +203,16 @@ timeScene.leave(ctx => {
                                 globalObj[ctx.update.callback_query.from.id].fullname, globalObj[ctx.update.callback_query.from.id].phone, null, null, texts.processing, null, globalObj[ctx.update.callback_query.from.id].id])
                                 .then(doc => {
                                     // ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
-                                    ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day}/${globalObj[ctx.update.callback_query.from.id].hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
- Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
- Если заблудились то можете связаться с нами по телефону +79258882091 Екатерина`);
+ //                                    ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day}/${globalObj[ctx.update.callback_query.from.id].hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
+ // Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
+ // Если заблудились то можете связаться с нами по телефону +79258882091 Екатерина`);
+                                    ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day} в ${globalObj[ctx.update.callback_query.from.id].hour} по адресу Калашный переулок 3, рабочая станция "ДомЖур", офис 9.
+
+Выход из м. Арбатская (синяя ветка): выход из первого вагона, к улицам Арбат, Новый Арбат. Далее из метро направо, до подземного перехода и там налево.
+
+Если заблудились то можете связаться с нами по телефону +79017875668`);
                                     delete globalObj[ctx.update.callback_query.from.id];
-                                    return ctx.replyWithPhoto({ source: './scheme.png'});
+                                    return ctx.replyWithPhoto({ source: './scheme.jpg'});
                                 })
                                 .catch(console.error);
                             return;
@@ -217,14 +222,18 @@ timeScene.leave(ctx => {
                                 globalObj[ctx.update.callback_query.from.id].fullname, globalObj[ctx.update.callback_query.from.id].phone, null, null, texts.processing, null, globalObj[ctx.update.callback_query.from.id].id]
                             , `A${index}:J${index}`)
                             .then(doc => {
-                                // ctx.reply(`Вам назначено интервью ${globalObj.day} на ${globalObj.hour}`);
-                                ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day} в ${globalObj[ctx.update.callback_query.from.id].hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
+//                                 ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day} в ${globalObj[ctx.update.callback_query.from.id].hour} по адресу ул. Марксистская 3 стр.2 3 этаж.
+//
+// Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
+//
+// Если заблудились то можете связаться с нами по телефону +79017875668`);
+                                ctx.reply(`Вам назначено интервью с нашим HR-Менеджером. Он будет Вас ждать ${globalObj[ctx.update.callback_query.from.id].day} в ${globalObj[ctx.update.callback_query.from.id].hour} по адресу Калашный переулок 3, рабочая станция "ДомЖур", офис 9.
 
-Выход из м. Марксистская: из стеклянных дверей налево и далее идем по правой руке до ТЦ Планета, далее вход с торца и можно идти по карте и указателям.
+Выход из м. Арбатская (синяя ветка): выход из первого вагона, к улицам Арбат, Новый Арбат. Далее из метро направо, до подземного перехода и там налево.
 
 Если заблудились то можете связаться с нами по телефону +79017875668`);
                                 delete globalObj[ctx.update.callback_query.from.id];
-                                return ctx.replyWithPhoto({ source: './scheme.png'});
+                                return ctx.replyWithPhoto({ source: './scheme.jpg'});
                             })
                             .catch(console.error);
                     });
